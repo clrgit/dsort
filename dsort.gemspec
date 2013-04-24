@@ -8,8 +8,18 @@ Gem::Specification.new do |spec|
   spec.version       = Dsort::VERSION
   spec.authors       = ["Claus Rasmussen"]
   spec.email         = ["clr@veda.dk"]
-  spec.description   = %q{dsort gem}
-  spec.summary       = %q{dsort gem}
+  spec.description   = %q{dsort - an easier to use version of TSort}
+  spec.summary       = %q{
+                          dsort is an easier to use version of the standard
+                          library TSort module. It implement the dsort method
+                          for dependency sorts and tsort for topological sorts.
+                          Compared to TSort the DSort::tsort method reverses
+                          its output, while DSort::dsort result in the same
+                          sorting order as TSort::tsort. This is done to make
+                          DSort::tsort behave as defined in general
+                          mathematics. See
+                          http://en.wikipedia.org/wiki/Topological_sorting
+                      }
   spec.homepage      = ""
   spec.license       = "MIT"
 
