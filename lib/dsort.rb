@@ -3,20 +3,48 @@ require "dsort/version"
 require 'tsort'
 
 module DSort
-  # dsort make a dependency sort on a partially ordered set so that objects
-  # depending on other objects comes last in the sort order
+  # dsort sort its input in "dependency" order: The input can be though of
+  # depends-on relations between objects and the output as sorted in the order
+  # needed to safisfy those depends-on relations. Three formats can be used:
   #
-  # dsort can be initialized with an array of dependencies or an array of
-  # objects. If an array of objects is used then a block should also be
-  # supplied to extract the dependency information from the objects. The block
-  # should take one object argument and return an array of objects
+  # dsort [[:a, :b], [:b, :c]]
+  #     array of pairs where the first element comes before the second
+  # dsort [[:a, [:b, :c, :d]], [:b, [:c, :d]]
+  #     array of pairs where the first element comes before all the elements in
+  #     the second array
+  # dsort([obj1, obj2, obj3]) { |obj| obj.followers }
+  #     array of objects that are given to the block. The block should return a
+  #     list of elements that comes after the given object
   #
-  # Examples
-  #   dsort [[:a, :b], [:a, :c], [:b, :c]]      # keys can be repeated
-  #   dsort [[:a, [:b, :c, :d]], [:b, [:c, :d]]
-  #   dsort([obj1, obj2, obj3]) { |obj| obj.dependencies }
+  # An example: If we have that dsort depends on ruby and rspec, ruby depends
+  # on C to compile, and rspec depends on ruby, then in what order should we
+  # build them ? Using dsort we could do
+  #
+  #   require 'dsort'
+  #   p dsort [[:dsort, :ruby], [:dsort, :rspec], [:ruby, :C], [:rspec, :ruby]]
+  #       => [:C, :ruby, :rspec, :dsort]
   #
   def dsort(a, &block) Private::DSortObject.new(a, &block).tsort end
+
+  # tsort sort its input in topological order: The input can be thought of as
+  # comes-before relations between objects and the output will be in
+  # first-to-last order. This definition corresponds to the mathemacial
+  # defitionnn of topological sort. See
+  # http://en.wikipedia.org/wiki/Topological_sorting. Three formats can be
+  # used:
+  #
+  # tsort [[:a, :b], [:b, :c]]
+  #     array of pairs where the first element comes before the second
+  # tsort [[:a, [:b, :c, :d]], [:b, [:c, :d]]
+  #     array of pairs where the first element comes before all the elements in
+  #     the second array
+  # tsort([obj1, obj2, obj3]) { |obj| obj.followers }
+  #     array of objects that are given to the block. The block should return a
+  #     list of elements that comes after the given object
+  #     
+  #   
+  #
+  #
   def tsort(a, &block) dsort(a, &block).reverse end
 
   module_function :dsort, :tsort
