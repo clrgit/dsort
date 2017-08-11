@@ -7,14 +7,13 @@ Gem::Specification.new do |spec|
   spec.name          = "dsort"
   spec.version       = Dsort::VERSION
   spec.authors       = ["Claus Rasmussen"]
-  spec.email         = ["clr@veda.dk"]
+  spec.email         = ["claus.l.rasmussen@gmail.com"]
   spec.description   = %q{dsort - an easier to use version of TSort}
   spec.summary       = %q{
                           dsort is an easier-to-use alternative to the standard
                           library TSort module: Data can be specified as simple
-                          array or by a block and it provide a version of tsort
-                          method that is defined as topological sort in
-                          mathematics (see
+                          array or by a block and tsort is defined as
+                          topological sort in mathematics (see
                           http://en.wikipedia.org/wiki/Topological_sorting).
                           The behavior of TSort::tsort is provided by the dsort
                           method but with the same interface as DSort::tsort
