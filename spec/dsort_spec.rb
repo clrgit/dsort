@@ -2,6 +2,15 @@ require 'spec_helper.rb'
 
 require 'dsort.rb'
 
+# Build a hierarchy of dependencies
+$DEPS = {
+  :A => [:B, :C],
+  :B => [:C, :D],
+  :C => [:D],
+  :D => []
+}
+
+
 describe DSort do
   describe "#dsort" do
     context "with dependency pairs" do
@@ -41,6 +50,10 @@ describe DSort do
         DSort.dsort(objs) { |obj| [obj.superclass].compact }.should == 
             [BasicObject, Object, Numeric, Integer, Float]
       end
+      it "should collect dependencies recursively" do
+        s = DSort.dsort(:A) { |obj| $DEPS[obj] }
+        s.should == [:D, :C, :B, :A]
+      end
     end
   end
   describe "#tsort" do
@@ -66,6 +79,9 @@ describe DSort do
         objs = [Integer, Numeric, Float, Object, BasicObject]
         DSort.tsort(objs) { |obj| [obj.superclass].compact }.should == 
             DSort.dsort(objs) { |obj| [obj.superclass].compact }.reverse
+
+        s = DSort.tsort(:A) { |obj| $DEPS[obj] }
+        s.should == [:A, :B, :C, :D]
       end
     end
   end
