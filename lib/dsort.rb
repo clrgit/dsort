@@ -25,7 +25,7 @@ module DSort
   # on C to compile, and rspec depends on ruby, then in what order should we
   # build them ? Using dsort we could do
   #
-  #   p dsort [[:dsort, :ruby, :rspec]], [:ruby, :C], [:rspec, :ruby]]
+  #   p dsort [[:dsort, [:ruby, :rspec]]], [:ruby, :C], [:rspec, :ruby]]
   #       => [:C, :ruby, :rspec, :dsort]
   #
   # or
