@@ -4,7 +4,23 @@ require 'tsort'
 
 module DSort
   # Thrown if a cyclic dependency is detected
-  Cyclic = TSort::Cyclic
+  #
+  # DSort::Cyclic is inherited from TSort::Cyclic so that recue handling code
+  # written for TSort will still work. It provides a #cycles member that lists
+  # the cycles
+  class Cyclic < TSort::Cyclic
+    # List of detected cycles sorted from shortest to longest cycle
+    attr_reader :cycles
+
+    def initialize(dsort_object)
+      @cycles = 
+          dsort_object.each_strongly_connected_component \
+            .select { |e| e.size > 1 } \
+            .sort { |l,r| r <=> l }
+      gram = cycles.size > 1 ? "ies" : "y"
+      super("Cyclic depedendenc#{gram} detected")
+    end
+  end
 
   # dsort sorts its input in "dependency" order: The input can be thought of
   # depends-on relations between objects and the output as sorted in the order
@@ -33,8 +49,7 @@ module DSort
   # then the arguments to dsort should use the array form even if there is only
   # one element. Ie.  Use dsort([:a]) instead of dsort(:a)
   #
-  # dsort raise a DSort::Cyclic exception if a cycle detected (DSort::Cyclic is
-  # inherited from TSort::Cyclic)
+  # dsort raise a DSort::Cyclic exception if a cycle detected 
   #
   # Example: If we have that dsort depends on ruby and rspec, ruby depends
   # on C to compile, and rspec depends on ruby, then in what order should we
@@ -58,7 +73,14 @@ module DSort
   #   p dsort(:dsort) { |e| h[e] }
   #       => [:C, :ruby, :rspec, :dsort]
   #
-  def dsort(a, &block) DSortPrivate::DSortObject.new(a, &block).tsort end
+  def dsort(a, &block) 
+    sort_object = DSortPrivate::DSortObject.new(a, &block)
+    begin
+      sort_object.tsort 
+    rescue TSort::Cyclic
+      raise Cyclic.new(sort_object)
+    end
+  end
 
   # tsort sort its input in topological order: The input can be thought of as
   # comes-before relations between objects and the output will be in
@@ -90,7 +112,6 @@ module DSort
           a = [a] if !a.is_a?(Array)
           a.each { |elem| find_dependencies(elem, &block) }
         else
-          a = a.to_a if a.is_a?(Hash)
           a.each { |obj, deps| 
             (@deps[obj] ||= []).concat(deps.is_a?(Array) ? deps : [deps])
           }

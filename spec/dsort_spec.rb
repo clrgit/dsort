@@ -15,6 +15,30 @@ $BLOCK_DATA = {
   :c => [:d]
 }
 
+describe DSort::Cyclic do
+  describe "#cycles" do
+    it "should be a list of cycles" do
+      pairs = [[:a, :b], [:b, :a]]
+      begin
+        DSort.dsort(pairs).should == 1
+      rescue DSort::Cyclic => e
+        e.cycles.size.should == 1
+        e.cycles[0].sort.should == [:a, :b]
+      end
+    end
+    it "should be sorted from shortest to longest cycle" do
+      pairs = [[:a, :b], [:b, :a], [:A, :B], [:B, :C], [:C, :A]]
+      begin
+        DSort.dsort(pairs).should == 1
+      rescue DSort::Cyclic => e
+        e.cycles.size.should == 2
+        e.cycles[0].sort.should == [:a, :b]
+        e.cycles[1].sort.should == [:A, :B, :C]
+      end
+    end
+  end
+end
+
 describe DSort do
   describe "#dsort" do
     context "with an array argument" do
@@ -105,6 +129,14 @@ describe DSort do
 
         s = DSort.tsort(:a) { |obj| $BLOCK_DATA [obj] || [] }
         s.should == [:a, :b, :c, :d]
+      end
+    end
+    context "with circular dependencies" do
+      it "should raise DSort::Cyclic" do
+       lambda {
+          pairs = [[:a, :b], [:b, :a]]
+          DSort.tsort(pairs).should == 1
+       }.should raise_error(DSort::Cyclic)
       end
     end
   end
