@@ -6,23 +6,32 @@ module DSort
   # Thrown if a cyclic dependency is detected
   Cyclic = TSort::Cyclic
 
-  # dsort sort its input in "dependency" order: The input can be though of
+  # dsort sorts its input in "dependency" order: The input can be thought of
   # depends-on relations between objects and the output as sorted in the order
-  # needed to safisfy those dependencies
+  # needed to safisfy those dependencies so that no object comes before an
+  # object it depends on
   #
-  # Input can be an array of relations where each relation is a pair (array) of
-  # an element and the element it depends on. For example [:a, :b] means that
-  # :a depends on :b. If the element depends on more than one other element,
-  # you can use a pair for each relation or compact them into an array so that
-  # [:a, [:b, :c]] is the same as [:a, :b], [:a, :c]. Note that if your
-  # elements are themselves array objects, then you should always use the 
-  # [:a, [:b, ...]] form
+  # dsort can take an array or a hash argument, or be supplied with a block
   #
-  # If dsort is given a block, the argument should be one or more elements and
-  # the block return a list of dependencies for a given element. dsort will
-  # then collect the dependencies recursively and sort the result. Note that if
-  # your elements are themselves array objects, then you should always enclose
-  # the argument(s) in an array
+  # The Array argument should consist of pairs (two-element Arrays) with the
+  # first element being the depending object and the second an object or an
+  # array of objects it depends on: For example [:a, :b] means that :a depends
+  # on :b, and [:b, [:c, :d]] that :b depends on both :c and :d
+  #
+  # The Hash argument should be a hash from depending object to an object or
+  # array of objects it depends on. If h is a Hash then dsort(h) is equivalent
+  # to dsort(h.to_a)
+  #
+  # Note that if the elements are arrays themselves, then you should use the
+  # array form to list the dependencies even if there is only one dependency.
+  # Ie. use [:a, [:b]] or {:a => [:b] } instead of [:a, :b] or {:a => :b}
+  #
+  # If dsort is given a block, the block is given an element as argument and
+  # should return an (possibly empty) array of the objects the argument depends
+  # on. The argument to dsort should be an element or an array of elements to
+  # be given to the block. Note that if the elements are arrays themselves,
+  # then the arguments to dsort should use the array form even if there is only
+  # one element. Ie.  Use dsort([:a]) instead of dsort(:a)
   #
   # dsort raise a DSort::Cyclic exception if a cycle detected (DSort::Cyclic is
   # inherited from TSort::Cyclic)
@@ -34,14 +43,19 @@ module DSort
   #   p dsort [[:dsort, [:ruby, :rspec]]], [:ruby, :C], [:rspec, :ruby]]
   #       => [:C, :ruby, :rspec, :dsort]
   #
-  # or
+  # Using a hash
   #
-  #   DEPS = {
+  #   h = {
   #     :dsort => [:ruby, :rspec],
   #     :ruby => [:C],
   #     :rspec => [:ruby]
   #   }
-  #   p dsort(:dsort) { |e| DEPS[e] }
+  #   p dsort(h) # Same as dsort(h.to_a)
+  #       => [:C, :ruby, :rspec, :dsort]
+  #
+  # or using a block
+  #
+  #   p dsort(:dsort) { |e| h[e] }
   #       => [:C, :ruby, :rspec, :dsort]
   #
   def dsort(a, &block) DSortPrivate::DSortObject.new(a, &block).tsort end
@@ -52,12 +66,8 @@ module DSort
   # defitionnn of topological sort. See
   # http://en.wikipedia.org/wiki/Topological_sorting
   #
-  # Input can be an array of relations where each relation is a pair (array) of
-  # an element and the element(s) it precedes: [[:a, :b], [:a, :c]] or [[:a,
-  # [:b, :c]]]. Note that if your elements are arrays then you need to put the
-  # second argument in an array even if there's only one like this [array1,
-  # [array2]]. If a block is given, the arguments should be an array of objects
-  # and the block return an array of succeeding objects
+  # Arguments are the same as for dsort. tsort is equivalent to
+  # dsort(...).reverse
   #
   # tsort raise a DSort::Cyclic exception if a cycle is detected (DSort::Cyclic
   # is an alias for TSort::Cyclic)
@@ -77,16 +87,17 @@ module DSort
       def initialize(a, &block)
         @deps = {}
         if block_given?
-          a = a.is_a?(Array) ? a : [a]
+          a = [a] if !a.is_a?(Array)
           a.each { |elem| find_dependencies(elem, &block) }
         else
+          a = a.to_a if a.is_a?(Hash)
           a.each { |obj, deps| 
             (@deps[obj] ||= []).concat(deps.is_a?(Array) ? deps : [deps])
           }
         end
 
         # Make sure all dependent objects are also represented as depending
-        # objects: If we're given [[:a, :b]] we want the @deps hash to include
+        # objects: If we're given [:a, :b] we want the @deps hash to include
         # both :a and :b as keys
         @deps.values.each { |deps|
           (deps.is_a?(Array) ? deps : [deps]).each { |d|
@@ -103,7 +114,7 @@ module DSort
       def find_dependencies(a, &block)
         block.call(a).each { |d|
           (@deps[a] ||= []) << d
-          find_dependencies(d, &block) 
+          find_dependencies(d, &block)
         }
       end
     end
