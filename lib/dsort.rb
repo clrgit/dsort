@@ -3,6 +3,9 @@ require "dsort/version"
 require 'tsort'
 
 module DSort
+  # Thrown if a cyclic dependency is detected
+  Cyclic = TSort::Cyclic
+
   # dsort sort its input in "dependency" order: The input can be though of
   # depends-on relations between objects and the output as sorted in the order
   # needed to safisfy those dependencies
@@ -20,6 +23,9 @@ module DSort
   # then collect the dependencies recursively and sort the result. Note that if
   # your elements are themselves array objects, then you should always enclose
   # the argument(s) in an array
+  #
+  # dsort raise a DSort::Cyclic exception if a cycle detected (DSort::Cyclic is
+  # inherited from TSort::Cyclic)
   #
   # Example: If we have that dsort depends on ruby and rspec, ruby depends
   # on C to compile, and rspec depends on ruby, then in what order should we
@@ -52,6 +58,9 @@ module DSort
   # second argument in an array even if there's only one like this [array1,
   # [array2]]. If a block is given, the arguments should be an array of objects
   # and the block return an array of succeeding objects
+  #
+  # tsort raise a DSort::Cyclic exception if a cycle is detected (DSort::Cyclic
+  # is an alias for TSort::Cyclic)
   #
   def tsort(a, &block) dsort(a, &block).reverse end
 
