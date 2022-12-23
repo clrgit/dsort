@@ -89,11 +89,20 @@ describe DSort do
       end
     end
     context "with circular dependencies" do
-      it "should raise DSort::Cyclic" do
-       lambda {
-          pairs = [[:a, :b], [:b, :a]]
-          DSort.dsort(pairs).should == 1
-       }.should raise_error(DSort::Cyclic)
+      context "should raise DSort::Cyclic" do
+        it "when given an array argument" do
+          lambda {
+            pairs = [[:a, :b], [:b, :a]]
+            DSort.dsort(pairs).should == 1
+          }.should raise_error(DSort::Cyclic)
+        end
+      
+        it "when given a block argument" do
+          l = lambda { |node| [node == :a ? :b : :a] }
+          expect {
+            DSort.dsort(:a, &l)
+          }.to raise_error(DSort::Cyclic)
+        end
       end
     end
   end

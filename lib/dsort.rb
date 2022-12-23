@@ -110,6 +110,7 @@ module DSort
         @deps = {}
         if block_given?
           a = [a] if !a.is_a?(Array)
+          @pool = {}
           a.each { |elem| find_dependencies(elem, &block) }
         else
           a.each { |obj, deps| 
@@ -134,20 +135,13 @@ module DSort
     private
       def find_dependencies(a, &block)
         block.call(a).each { |d|
-          (@deps[a] ||= []) << d
-          find_dependencies(d, &block)
+          if !(@deps[a] ||= []).include? d # Cyclic dependency
+            @deps[a] << d
+            find_dependencies(d, &block)
+          end
         }
       end
     end
   end
 end
-
-
-
-
-
-
-
-
-
 
