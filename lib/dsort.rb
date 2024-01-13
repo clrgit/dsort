@@ -22,6 +22,11 @@ module DSort
     end
   end
 
+  # :call-seq:
+  #   dsort(tuples)
+  #   dsort(hash)
+  #   dsort(array) { |element| block }
+  #
   # dsort sorts its input in "dependency" order: The input can be thought of
   # depends-on relations between objects and the output as sorted in the order
   # needed to safisfy those dependencies so that no object comes before an
@@ -55,7 +60,7 @@ module DSort
   # on C to compile, and rspec depends on ruby, then in what order should we
   # build them ? Using dsort we could do
   #
-  #   p dsort [[:dsort, [:ruby, :rspec]]], [:ruby, :C], [:rspec, :ruby]]
+  #   p DSort.dsort [[:dsort, [:ruby, :rspec]]], [:ruby, :C], [:rspec, :ruby]]
   #       => [:C, :ruby, :rspec, :dsort]
   #
   # Using a hash
@@ -65,13 +70,17 @@ module DSort
   #     :ruby => [:C],
   #     :rspec => [:ruby]
   #   }
-  #   p dsort(h) # Same as dsort(h.to_a)
+  #   p dDSort.sort(h) # Same as dsort(h.to_a)
   #       => [:C, :ruby, :rspec, :dsort]
   #
   # or using a block
   #
-  #   p dsort(:dsort) { |e| h[e] }
+  #   p DSort.dsort(:dsort) { |e| h[e] }
   #       => [:C, :ruby, :rspec, :dsort]
+  #
+  #
+  # TODO: A array/hash argument with a block that performs dependency
+  #       comparison
   #
   def dsort(a, &block) 
     sort_object = DSortPrivate::DSortObject.new(a, &block)
@@ -81,6 +90,11 @@ module DSort
       raise Cyclic.new(sort_object)
     end
   end
+
+  # TODO
+  # Merge two or more dependency-sorted arrays
+  # def dsort_merge(array, array, *arrays)
+  # end
 
   # tsort sort its input in topological order: The input can be thought of as
   # comes-before relations between objects and the output will be in
